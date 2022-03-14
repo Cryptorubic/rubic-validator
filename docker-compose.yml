@@ -1,0 +1,334 @@
+version: '3'
+
+services:
+  database:
+    container_name: ${DATABASE_SERVICE_NAME}
+    restart: always
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${DATABASE_ORIGIN_USER}
+      POSTGRES_PASSWORD: ${DATABASE_ORIGIN_PASS}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    expose:
+      - ${DATABASE_PORT}
+
+  database-admin:
+    container_name: ${DB_ADMIN_SERVICE_NAME}
+    restart: always
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${DB_ADMIN_ORIGIN_USER_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${DB_ADMIN_ORIGIN_PASS}
+      PGADMIN_LISTEN_ADDRESS: ${DB_ADMIN_HOST}
+      PGADMIN_LISTEN_PORT: ${DB_ADMIN_PORT}
+    depends_on:
+      - database
+    expose:
+      - ${DB_ADMIN_PORT}
+
+  backend:
+    container_name: ${BACKEND_SERVICE_NAME}
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    volumes:
+      - ./backend:/code:cached
+      - statics_volume:/code/static
+    depends_on:
+      - database
+    expose:
+      - ${BACKEND_PORT}
+    command:
+    - gunicorn
+    - -c
+    - gunicorn.py
+    - backend.asgi:application
+    - -k
+    - uvicorn.workers.UvicornWorker
+    - --reload
+
+  backend-bsc-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-bsc-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=10
+      - BLOCKCHAIN_ID=1
+      - START_BLOCK=15919094
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-eth-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-eth-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=10
+      - BLOCKCHAIN_ID=2
+      - START_BLOCK=14354929
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+    - python
+    - scanner.py
+
+  backend-pol-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-pol-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=20
+      - BLOCKCHAIN_ID=3
+      - START_BLOCK=25778911
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-avax-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-avax-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=20
+      - BLOCKCHAIN_ID=4
+      - START_BLOCK=11902865
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-ftm-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-ftm-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=20
+      - BLOCKCHAIN_ID=5
+      - START_BLOCK=32995265
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-movr-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-movr-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=20
+      - BLOCKCHAIN_ID=6
+      - START_BLOCK=1574252
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-harm-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-harm-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=20
+      - BLOCKCHAIN_ID=7
+      - START_BLOCK=23893888
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-arb-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-arb-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=20
+      - BLOCKCHAIN_ID=10
+      - START_BLOCK=7664240
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-aur-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-aur-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    environment:
+      - MIN_CONFIRMATION_BLOCK_COUNT=20
+      - BLOCKCHAIN_ID=11
+      - START_BLOCK=61116361
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+      - python
+      - scanner.py
+
+  backend-near-scanner:
+    container_name: ${BACKEND_SERVICE_NAME}-near-scanner
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - database
+      - celery-worker
+    command:
+    - python
+    - near_scanner.py
+
+  celery-broker:
+    container_name: ${BROKER_SERVICE_NAME}
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/celery_broker.Dockerfile
+    expose:
+      - ${BROKER_PORT}
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  celery-worker:
+    container_name: ${CELERY_SERVICE_NAME}
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - celery-broker
+    # expose:
+    #   - ${BACKEND_PORT}
+    command:
+    - celery
+    - --app
+    - backend
+    - worker
+    - --loglevel=DEBUG
+    - -E
+    - --logfile=celery.log
+
+  celery-beat:
+    container_name: ${CELERY_BEAT_SERVICE_NAME}
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    env_file: .env
+    volumes:
+      - ./backend:/code:cached
+    depends_on:
+      - celery-broker
+      - celery-worker
+    # expose:
+    #   - ${BACKEND_PORT}
+    command:
+    - celery
+    - --app
+    - backend
+    - beat
+    - --loglevel=DEBUG
+    - -S
+    - django
+
+  http-server:
+    container_name: ${HTTP_SERVER_SERVICE_NAME}
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/http_server.Dockerfile
+    environment:
+      HTTP_SERVER_HOST: ${HTTP_SERVER_HOST}
+      HTTP_SERVER_PORT: ${HTTP_SERVER_PORT}
+      HTTP_SUBDOMAIN: ${HTTP_SUBDOMAIN}
+      HTTP_SUBDOMAIN_PREFIX: ${HTTP_SUBDOMAIN_PREFIX}
+      NGINX_ENVSUBST_TEMPLATE_DIR: ${HTTP_TEMPLATE_DIR}
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/sites-available
+      BACKEND_SERVICE_NAME: ${BACKEND_SERVICE_NAME}
+      BACKEND_PORT: ${BACKEND_PORT}
+      DB_ADMIN_SERVICE_NAME: ${DB_ADMIN_SERVICE_NAME}
+      DB_ADMIN_PORT: ${DB_ADMIN_PORT}
+    volumes:
+      - statics_volume:/usr/share/nginx/static:ro
+    expose:
+      - ${HTTP_SERVER_PORT}
+    ports:
+      - '${HTTP_SERVER_PORT}:${HTTP_SERVER_PORT}'
+    depends_on:
+      - backend
+      - database-admin
+
+volumes:
+  db_volume:
+  statics_volume:
